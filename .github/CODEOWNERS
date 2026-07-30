@@ -1,0 +1,13 @@
+# Harness / infrastructure — maintainer-owned.
+#
+# Non-maintainers are already blocked from these paths by the untamperable
+# `policy` check. This file adds defense-in-depth: once you enable required
+# code-owner review in branch protection, any change here also needs a
+# maintainer's approval.
+
+/.github/            @MarkAureli
+/scripts/            @MarkAureli
+/lakefile.toml       @MarkAureli
+/lean-toolchain      @MarkAureli
+/lake-manifest.json  @MarkAureli
+/Qlean/Meta/         @MarkAureli

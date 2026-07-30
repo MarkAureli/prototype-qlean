@@ -1,0 +1,36 @@
+name: policy
+
+# Role-based structural gate. Runs from the BASE branch via pull_request_target,
+# so a PR cannot modify the policy that judges it. Metadata-only: it inspects the
+# author's role and the changed-file list, and never checks out or runs PR code.
+
+on:
+  pull_request_target:
+    types: [opened, reopened, synchronize, edited]
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    steps:
+      # Check out the BASE commit — the trusted version of the policy script.
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha }}
+          persist-credentials: false
+
+      - name: Enforce contribution policy
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_ASSOC: ${{ github.event.pull_request.author_association }}
+        run: python3 scripts/check_policy.py

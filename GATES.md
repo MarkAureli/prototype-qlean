@@ -27,6 +27,26 @@ have flagship theorems that are conditional on unproven assumed inputs (observed
 in the wild). Gate 4 + the hypothesis audit close that hole mechanically by
 forcing conditionality into the prose, where the link check and reviewer act on it.
 
+## Role-based policy gate
+
+A fifth required check, `policy`, enforces *who may submit what*:
+
+* **Maintainers** (repo role ≥ Maintain, or the repo owner) may open any PR.
+* **Non-maintainers** may open **content PRs only** — every changed file must be
+  `Qlean.lean`, `Qlean/**/*.lean` (PascalCase segments, excluding `Qlean/Meta/**`),
+  or `blueprint/src/**/*.tex`. Anything else (scripts, CI, lakefile, LICENSE,
+  harness infra) is maintainer-only.
+
+Why it can't be bypassed: the check runs from the **base branch** via
+`pull_request_target` (a PR cannot edit the policy that judges it) and is
+**metadata-only** — it reads the author's role and the changed-file list via the
+API and never checks out or runs PR code. Because editing a workflow or script
+is itself a non-content change, a non-maintainer literally cannot open a PR that
+weakens the checks — it fails `policy` before anything runs.
+
+Defense-in-depth: `.github/CODEOWNERS` marks the harness paths maintainer-owned
+(active once you enable required code-owner review).
+
 ## The linking contract
 
 * Mark each public result with `@[qlean_export]` (see `Qlean/Meta/Export.lean`).

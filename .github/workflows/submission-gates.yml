@@ -18,6 +18,10 @@ jobs:
       - name: Sorry lint
         run: bash scripts/check_no_sorry.sh Qlean
 
+      # Import-direction gate: core must not import Contrib (static, no build needed).
+      - name: Import-direction gate
+        run: python3 scripts/check_import_direction.py
+
       # Toolchain + Mathlib cache + `lake build` (the COMPILE gate).
       - name: Build
         uses: leanprover/lean-action@v1
@@ -32,6 +36,10 @@ jobs:
       # Coverage gate: reject unimported Lean files (so the axiom gate sees all of them).
       - name: Coverage gate
         run: python3 scripts/check_coverage.py
+
+      # Core semver gate: a core-API change must carry a matching VERSION bump.
+      - name: Core semver gate
+        run: python3 scripts/check_api_semver.py
 
       # Gate 3: prose <-> Lean link completeness.
       - name: Link-completeness gate

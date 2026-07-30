@@ -1,0 +1,6 @@
+# qlean core API baseline — version: 0.1.0
+# regenerate with scripts/update_api_baseline.sh at release; then commit + tag.
+Qlean.gram_posSemidef : ∀ {n : ℕ} (A : Matrix (Fin n) (Fin n) ℂ), (A.conjTranspose * A).PosSemidef
+Qlean.IsDensityMatrix : {n : ℕ} → Matrix (Fin n) (Fin n) ℂ → Prop
+Qlean.IsDensityMatrix.trace_eq_one : ∀ {n : ℕ} {ρ : Matrix (Fin n) (Fin n) ℂ}, Qlean.IsDensityMatrix ρ → ρ.trace = 1
+Qlean.trace_one_eq : ∀ {n : ℕ}, Matrix.trace 1 = ↑n

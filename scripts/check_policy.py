@@ -8,16 +8,16 @@ footgun, and we avoid it).
 
 Policy:
   * Maintainers (repo role >= Maintain, or the repo OWNER) may open ANY PR.
-  * Non-maintainers may open *content* PRs only. Every changed file must be:
-      - `Qlean.lean` (the library root import file), or
-      - `Qlean/**/*.lean` with PascalCase path segments, EXCEPT `Qlean/Meta/**`
-        (harness infra), or
+  * Non-maintainers may open *Contrib content* PRs only. Every changed file must be:
+      - `Qlean/Contrib/**/*.lean` with PascalCase path segments, or
+      - `Qlean/Contrib.lean` (the contrib aggregator — where they wire their import), or
       - `blueprint/src/**/*.tex`.
-    Everything else — scripts, CI workflows, lakefile, LICENSE, Qlean/Meta —
-    is maintainer-only. In particular a non-maintainer cannot open a PR that
-    edits the checks (this file, the workflows) *or* smuggles Lean content in
-    under a non-conforming name: both are rejected here, and this job runs from
-    the base branch so the PR cannot weaken it.
+    Everything else — the core library (`Qlean.lean`, `Qlean/Core/**`,
+    `Qlean/Meta/**`), scripts, CI workflows, lakefile, LICENSE — is
+    maintainer-only. Core grows only by maintainer promotion. In particular a
+    non-maintainer cannot edit the checks, the core, or smuggle Lean content in
+    under a non-conforming name; this job runs from the base branch so the PR
+    cannot weaken it.
 
 Local test hooks (never set in CI):
   POLICY_TEST_ROLE = maintainer | contributor   # skip the API role lookup
@@ -34,8 +34,8 @@ AUTHOR = os.environ.get("PR_AUTHOR", "")
 PR = os.environ.get("PR_NUMBER", "")
 ASSOC = os.environ.get("PR_ASSOC", "")
 
-# Content Lean module: PascalCase segments under Qlean/, ending in a PascalCase file.
-LEAN_RE = re.compile(r"^Qlean/(?:[A-Z][A-Za-z0-9]*/)*[A-Z][A-Za-z0-9]*\.lean$")
+# Contrib Lean module: PascalCase segments under Qlean/Contrib/, PascalCase file.
+CONTRIB_LEAN_RE = re.compile(r"^Qlean/Contrib/(?:[A-Z][A-Za-z0-9]*/)*[A-Z][A-Za-z0-9]*\.lean$")
 # Blueprint prose: any .tex under blueprint/src/.
 TEX_RE = re.compile(r"^blueprint/src/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.tex$")
 
@@ -79,20 +79,20 @@ def changed_files():
 
 def violation(f):
     """Reason a non-maintainer may not touch `f`, or None if it is allowed content."""
-    if f == "Qlean.lean":
-        return None
-    if f.startswith("Qlean/Meta/"):
-        return "harness infra (Qlean/Meta/**) — maintainer-only"
-    if f.startswith("Qlean/"):
+    if f == "Qlean/Contrib.lean":
+        return None  # contrib aggregator — contributors wire their import here
+    if f.startswith("Qlean/Contrib/"):
         if not f.endswith(".lean"):
-            return "only .lean files are allowed under Qlean/"
-        if not LEAN_RE.match(f):
-            return "bad name/location — must be Qlean/<PascalCase>/.../<PascalCase>.lean"
+            return "only .lean files are allowed under Qlean/Contrib/"
+        if not CONTRIB_LEAN_RE.match(f):
+            return "bad name — must be Qlean/Contrib/<PascalCase>/.../<PascalCase>.lean"
         return None
     if f.startswith("blueprint/"):
         if not TEX_RE.match(f):
             return "blueprint files must be blueprint/src/**/*.tex"
         return None
+    if f == "Qlean.lean" or f.startswith("Qlean/"):
+        return "core / library infra — maintainer-only (contributions go in Qlean/Contrib/)"
     return "non-content path — maintainer-only"
 
 

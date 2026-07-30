@@ -54,6 +54,20 @@ run_cmd do
   IO.FS.writeFile "build/qlean_modules.txt"
     (String.intercalate "\n" (qmods.toList.map (·.toString)) ++ "\n")
 
+  -- CORE API DUMP (for the signature-semver gate): the type signature of every
+  -- CORE @[qlean_export] — i.e. exports NOT under the `Qlean.Contrib` namespace.
+  -- Proof changes leave the type unchanged; adds/removes/signature-changes show.
+  liftTermElabM do
+    let mut lines : Array String := #[]
+    for name in exports do
+      if (`Qlean.Contrib).isPrefixOf name then
+        continue
+      if let some ci := env.find? name then
+        let ty ← Meta.ppExpr ci.type
+        lines := lines.push s!"{name} : {ty.pretty 1000000}"
+    IO.FS.writeFile "build/qlean_core_api.txt"
+      (String.intercalate "\n" lines.toList ++ "\n")
+
   -- HYPOTHESIS AUDIT (informational — routes conditionality to human review).
   liftTermElabM do
     for name in exports do

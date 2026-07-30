@@ -2,11 +2,11 @@ import Mathlib
 import Qlean.Meta.Export
 
 /-!
-# Qlean — basic facts (prototype)
+# Qlean.Core — basic facts (prototype)
 
-A handful of elementary, fully-proven facts used to exercise the submission
-gates end-to-end. Each `@[qlean_export]` declaration is linked to prose in
-`blueprint/src/content.tex`.
+A handful of elementary, fully-proven core facts used to exercise the gates.
+Core declarations live in the clean `Qlean.*` namespace (no `Core.`); the module
+path `Qlean/Core/**` is what marks them as curated, maintainer-owned content.
 -/
 
 namespace Qlean
@@ -16,8 +16,8 @@ open scoped ComplexOrder
 
 variable {n : ℕ}
 
-/-- A **density matrix** on a finite-dimensional system: a positive semidefinite
-operator with unit trace. -/
+/-- A **density matrix** on a finite-dimensional quantum system: a positive
+semidefinite operator with unit trace. -/
 @[qlean_export]
 def IsDensityMatrix (ρ : Matrix (Fin n) (Fin n) ℂ) : Prop :=
   ρ.PosSemidef ∧ ρ.trace = 1

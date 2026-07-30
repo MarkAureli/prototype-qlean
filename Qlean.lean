@@ -1,2 +1,3 @@
 import Qlean.Meta.Export
-import Qlean.Basic
+import Qlean.Core
+import Qlean.Contrib

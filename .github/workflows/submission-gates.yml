@@ -1,0 +1,34 @@
+name: submission-gates
+
+# The four mechanical gates a submission must pass before human review.
+# A failure at any gate rejects the PR.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      # Gate 1 (advisory, fast): no `sorry`/`admit`.
+      - name: Sorry lint
+        run: bash scripts/check_no_sorry.sh Qlean
+
+      # Toolchain + Mathlib cache + `lake build` (the COMPILE gate).
+      - name: Build
+        uses: leanprover/lean-action@v1
+        with:
+          use-mathlib-cache: true
+          build: true
+
+      # Gate 2 + hypothesis audit + export dump.
+      - name: Axiom gate & hypothesis audit
+        run: lake env lean scripts/Checker.lean
+
+      # Gate 3: prose <-> Lean link completeness.
+      - name: Link-completeness gate
+        run: python3 scripts/check_links.py blueprint/src/content.tex build/qlean_exports.txt

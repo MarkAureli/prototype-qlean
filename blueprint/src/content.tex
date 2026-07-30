@@ -1,0 +1,33 @@
+% Qlean blueprint — prose linked to Lean via \lean{...}.
+% The link-completeness gate (scripts/check_links.py) enforces that:
+%   (a) every formal environment below carries a \lean{...} link, and
+%   (b) every \lean{...} names a declaration exported from the Lean library.
+
+\section{Basic facts (prototype)}
+
+\begin{definition}[Density matrix]
+  \label{def:density}
+  \lean{Qlean.IsDensityMatrix}
+  A \emph{density matrix} on a finite-dimensional quantum system is a positive
+  semidefinite operator $\rho$ with unit trace, $\operatorname{tr}\rho = 1$.
+\end{definition}
+
+\begin{proposition}[Density matrices have unit trace]
+  \label{prop:density-trace}
+  \lean{Qlean.IsDensityMatrix.trace_eq_one}
+  \uses{def:density}
+  If $\rho$ is a density matrix, then $\operatorname{tr}\rho = 1$.
+\end{proposition}
+
+\begin{theorem}[Trace of the identity]
+  \label{thm:trace-one}
+  \lean{Qlean.trace_one_eq}
+  The trace of the $n \times n$ identity operator equals $n$.
+\end{theorem}
+
+\begin{theorem}[Gram operators are positive semidefinite]
+  \label{thm:gram-psd}
+  \lean{Qlean.gram_posSemidef}
+  For any operator $A$, the Gram operator $A^{\dagger} A$ is positive
+  semidefinite.
+\end{theorem}

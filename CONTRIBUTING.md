@@ -21,7 +21,7 @@ As a contributor (non-maintainer), a PR may **only** touch:
 |------|-----|
 | `Qlean/Contrib/**/*.lean` | your Lean content |
 | `Qlean/Contrib.lean` | one `import` line wiring your module in |
-| `blueprint/src/content.tex` | the human-readable prose for your results |
+| `blueprint/src/contrib/<Name>.tex` | a **fresh** file with your result's prose |
 
 Anything else — `Qlean/Core/**`, the repo root, scripts, CI, `lakefile` — is
 maintainer-only and is **rejected automatically** by the `policy` check. If you
@@ -72,10 +72,10 @@ change them.
 
    (Unimported files are rejected — the axiom checker must be able to see yours.)
 
-4. **Document it.** For every `@[qlean_export]` result, add a prose entry to
-   `blueprint/src/content.tex` inside a `definition`/`theorem`/`lemma`/
-   `proposition`/`corollary` environment, linked to the Lean declaration with
-   `\lean{...}`:
+4. **Document it in a fresh tex.** Add **one new file**
+   `blueprint/src/contrib/<Name>.tex` describing your contribution. It must
+   contain **at least one** `\lean{Qlean.Contrib...}` link to a declaration you
+   submitted — that is the anchor tying your prose to your Lean:
 
    ```latex
    \begin{theorem}[Holevo bound]
@@ -85,8 +85,11 @@ change them.
    \end{theorem}
    ```
 
-   Every formal environment must carry a `\lean{}`, and every `\lean{}` must name
-   a real exported declaration — both are checked.
+   You do **not** need prose for every Lean statement — a proof often splits into
+   technical lemmata that need no narration. But every formal environment you
+   *do* write must carry a `\lean{}`, and every `\lean{}` must resolve to a real
+   exported declaration. Edit the shared core prose (`content.tex`)? That's
+   maintainer-only — your contribution lives in its own `contrib/` file.
 
 5. **Add sanity lemmas for new definitions.** If you introduce a definition,
    prove a couple of basic facts about it (e.g. a new entropy is non-negative,

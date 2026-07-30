@@ -1,68 +1,69 @@
 #!/usr/bin/env python3
-"""Link-completeness gate (gate 3).
+"""Link gate — prose <-> Lean.
 
-Enforces the two mechanical rules that make prose <-> Lean linking un-fudgeable:
+Scans every `blueprint/src/**/*.tex` and enforces:
 
-  1. COMPLETENESS: every formal environment (definition/theorem/lemma/
-     proposition/corollary) in the blueprint must contain at least one
-     `\\lean{...}` link. Unlinked prose -> reject.
-  2. RESOLUTION: every `\\lean{Name}` must name a declaration that is actually
-     exported from the Lean library (read from build/qlean_exports.txt).
-     A dangling or misspelled link -> reject.
+  (a) every formal environment (definition/theorem/lemma/proposition/corollary)
+      contains at least one `\\lean{...}` link;
+  (b) every `\\lean{...}` names a real exported declaration; and
+  (c) every *contribution* tex (`blueprint/src/contrib/**`) references at least one
+      contributed declaration — `\\lean{Qlean.Contrib...}`.
 
-Usage: scripts/check_links.py [TEX] [EXPORTS]
-  TEX      default: blueprint/src/content.tex
-  EXPORTS  default: build/qlean_exports.txt   (written by scripts/Checker.lean)
+Not every Lean declaration needs prose: a theorem's proof may be split into
+technical lemmata that need no narration. Only the reverse (prose -> Lean) links
+are required, plus the one-anchor rule (c) per contribution.
+
+Usage: scripts/check_links.py [BLUEPRINT_DIR] [EXPORTS_FILE]
 """
+import pathlib
 import re
 import sys
-import pathlib
 
-tex_path = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path("blueprint/src/content.tex")
+bp_dir = pathlib.Path(sys.argv[1]) if len(sys.argv) > 1 else pathlib.Path("blueprint/src")
 exports_path = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else pathlib.Path("build/qlean_exports.txt")
 
 FORMAL_ENVS = ("definition", "theorem", "lemma", "proposition", "corollary")
-
-
-def strip_comments(s: str) -> str:
-    # Drop TeX line comments (a % not preceded by a backslash).
-    return re.sub(r"(?<!\\)%.*", "", s)
-
-
-if not tex_path.exists():
-    sys.exit(f"link gate: tex file not found: {tex_path}")
-
-text = strip_comments(tex_path.read_text())
-
-if exports_path.exists():
-    exports = {ln.strip() for ln in exports_path.read_text().splitlines() if ln.strip()}
-else:
-    sys.exit(f"link gate: exports file not found: {exports_path} "
-             f"(run `lake env lean scripts/Checker.lean` first)")
-
 lean_re = re.compile(r"\\lean\{([^}]*)\}")
 label_re = re.compile(r"\\label\{([^}]*)\}")
 env_re = re.compile(r"\\begin\{(%s)\}(.*?)\\end\{\1\}" % "|".join(FORMAL_ENVS), re.DOTALL)
 
+
+def strip_comments(s: str) -> str:
+    return re.sub(r"(?<!\\)%.*", "", s)
+
+
+if not exports_path.exists():
+    sys.exit(f"link gate: exports file not found: {exports_path} (run Checker.lean first)")
+exports = {ln.strip() for ln in exports_path.read_text().splitlines() if ln.strip()}
+
+tex_files = sorted(bp_dir.rglob("*.tex"))
 errors = []
+total_refs = 0
 
-# Rule 1: completeness — each formal environment carries a \lean{} link.
-for m in env_re.finditer(text):
-    env, body = m.group(1), m.group(2)
-    label = label_re.search(body)
-    tag = label.group(1) if label else "(unlabelled)"
-    names = [n.strip() for n in lean_re.findall(body)]
-    if not names:
-        errors.append(f"UNLINKED  <{env}> {tag}: no \\lean{{...}} link.")
-    for name in names:
-        if name not in exports:
-            errors.append(f"BAD LINK  <{env}> {tag}: \\lean{{{name}}} is not an exported declaration.")
+for tex in tex_files:
+    rel = str(tex).replace("\\", "/")
+    text = strip_comments(tex.read_text())
+    refs = [n.strip() for n in lean_re.findall(text)]
+    total_refs += len(refs)
 
-# Rule 2: resolution — every \lean{} anywhere resolves (catches links outside envs too).
-all_refs = [n.strip() for n in lean_re.findall(text)]
-for name in all_refs:
-    if name not in exports:
-        errors.append(f"BAD LINK  \\lean{{{name}}}: not an exported declaration.")
+    # (a) every formal environment links to Lean.
+    for m in env_re.finditer(text):
+        env, body = m.group(1), m.group(2)
+        lab = label_re.search(body)
+        tag = lab.group(1) if lab else "(unlabelled)"
+        if not lean_re.search(body):
+            errors.append(f"{rel}: <{env}> {tag}: no \\lean{{...}} link.")
+
+    # (b) every reference resolves to an exported declaration.
+    for n in refs:
+        if n not in exports:
+            errors.append(f"{rel}: \\lean{{{n}}}: not an exported declaration.")
+
+    # (c) a contribution tex must anchor to at least one contributed declaration.
+    if "blueprint/src/contrib/" in rel:
+        if not any(n.startswith("Qlean.Contrib.") and n in exports for n in refs):
+            errors.append(f"{rel}: a contribution's prose must reference at least one "
+                          f"submitted declaration — \\lean{{Qlean.Contrib...}}.")
 
 if errors:
     print("✗ LINK GATE FAILED:")
@@ -70,5 +71,5 @@ if errors:
         print("  " + e)
     sys.exit(1)
 
-print(f"✓ LINK GATE passed: every formal environment is linked; "
-      f"all {len(set(all_refs))} \\lean{{}} reference(s) resolve.")
+print(f"✓ LINK GATE: {len(tex_files)} tex file(s); every formal environment linked; "
+      f"all {total_refs} \\lean{{}} reference(s) resolve.")

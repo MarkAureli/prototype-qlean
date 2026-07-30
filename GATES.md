@@ -9,7 +9,7 @@ looks at it. The gates are ordered cheapest-first.
 | 2 | **Compile** | `lake build` | the Lean actually type-checks | reject |
 | 3 | **Axiom** | `scripts/Checker.lean` | no axioms beyond `propext`, `Classical.choice`, `Quot.sound` | reject |
 | 4 | **Coverage** | `scripts/check_coverage.py` | every `Qlean/**/*.lean` is imported from `Qlean.lean` (no orphan modules the axiom gate can't see) | reject |
-| 5 | **Link completeness** | `scripts/check_links.py` | every prose statement is linked to an existing Lean decl, and every link resolves | reject |
+| 5 | **Links** | `scripts/check_links.py` | (a) every formal environment in `blueprint/src/**` links via `\lean{}`; (b) every link resolves; (c) each contribution tex (`contrib/**`) references ≥1 `Qlean.Contrib.*` decl | reject |
 | 6 | **Import direction** | `scripts/check_import_direction.py` | core (`Qlean/Core/**`) never imports `Qlean.Contrib` | reject |
 | 7 | **Core semver** | `scripts/check_api_semver.py` | a change to the core API surface carries a matching `VERSION` bump | reject |
 

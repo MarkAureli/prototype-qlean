@@ -41,6 +41,6 @@ jobs:
       - name: Core semver gate
         run: python3 scripts/check_api_semver.py
 
-      # Gate 3: prose <-> Lean link completeness.
+      # Gate 3: prose <-> Lean links (scans all of blueprint/src).
       - name: Link-completeness gate
-        run: python3 scripts/check_links.py blueprint/src/content.tex build/qlean_exports.txt
+        run: python3 scripts/check_links.py blueprint/src build/qlean_exports.txt

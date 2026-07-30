@@ -11,7 +11,8 @@ Policy:
   * Non-maintainers may open *Contrib content* PRs only. Every changed file must be:
       - `Qlean/Contrib/**/*.lean` with PascalCase path segments, or
       - `Qlean/Contrib.lean` (the contrib aggregator — where they wire their import), or
-      - `blueprint/src/**/*.tex`.
+      - `blueprint/src/contrib/**/*.tex` (their contribution prose).
+    A PR that adds/changes Contrib Lean must also *add* a fresh contrib .tex file.
     Everything else — the core library (`Qlean.lean`, `Qlean/Core/**`,
     `Qlean/Meta/**`), scripts, CI workflows, lakefile, LICENSE — is
     maintainer-only. Core grows only by maintainer promotion. In particular a
@@ -36,8 +37,8 @@ ASSOC = os.environ.get("PR_ASSOC", "")
 
 # Contrib Lean module: PascalCase segments under Qlean/Contrib/, PascalCase file.
 CONTRIB_LEAN_RE = re.compile(r"^Qlean/Contrib/(?:[A-Z][A-Za-z0-9]*/)*[A-Z][A-Za-z0-9]*\.lean$")
-# Blueprint prose: any .tex under blueprint/src/.
-TEX_RE = re.compile(r"^blueprint/src/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.tex$")
+# Contribution prose: a fresh .tex under blueprint/src/contrib/.
+CONTRIB_TEX_RE = re.compile(r"^blueprint/src/contrib/(?:[A-Za-z0-9._-]+/)*[A-Za-z0-9._-]+\.tex$")
 
 
 def run(cmd):
@@ -88,8 +89,9 @@ def violation(f):
             return "bad name — must be Qlean/Contrib/<PascalCase>/.../<PascalCase>.lean"
         return None
     if f.startswith("blueprint/"):
-        if not TEX_RE.match(f):
-            return "blueprint files must be blueprint/src/**/*.tex"
+        if not CONTRIB_TEX_RE.match(f):
+            return ("contribution prose must be a fresh blueprint/src/contrib/<Name>.tex "
+                    "(core prose and other blueprint files are maintainer-only)")
         return None
     if f == "Qlean.lean" or f.startswith("Qlean/"):
         return "core / library infra — maintainer-only (contributions go in Qlean/Contrib/)"
@@ -115,6 +117,16 @@ def main():
             print(f"  {f}: {r}")
         print("A maintainer must make this change, or restructure it as a content PR.")
         return 1
+
+    # A contribution that adds/changes Contrib Lean must ship a fresh prose file.
+    contrib_lean = [f for (_s, f) in files if f.startswith("Qlean/Contrib/") and f.endswith(".lean")]
+    if contrib_lean:
+        fresh_tex = [f for (s, f) in files if s == "added" and CONTRIB_TEX_RE.match(f)]
+        if not fresh_tex:
+            print("✗ POLICY GATE FAILED — a contribution must include a fresh prose file:")
+            print("  add a new blueprint/src/contrib/<Name>.tex documenting your result,")
+            print("  with at least one \\lean{Qlean.Contrib...} link to your submitted code.")
+            return 1
 
     print(f"✓ POLICY GATE: content PR — all {len(files)} changed file(s) conform.")
     return 0

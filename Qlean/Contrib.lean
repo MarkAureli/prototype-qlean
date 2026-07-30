@@ -1,3 +1,5 @@
+import Qlean.Contrib.QSP.SqrtLog
+
 /-!
 # Qlean.Contrib
 

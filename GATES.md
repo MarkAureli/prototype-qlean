@@ -8,7 +8,8 @@ looks at it. The gates are ordered cheapest-first.
 | 1 | **Sorry lint** | `scripts/check_no_sorry.sh` | no `sorry`/`admit` | reject (advisory; gate 2 is authoritative) |
 | 2 | **Compile** | `lake build` | the Lean actually type-checks | reject |
 | 3 | **Axiom** | `scripts/Checker.lean` | no axioms beyond `propext`, `Classical.choice`, `Quot.sound` | reject |
-| 4 | **Link completeness** | `scripts/check_links.py` | every prose statement is linked to an existing Lean decl, and every link resolves | reject |
+| 4 | **Coverage** | `scripts/check_coverage.py` | every `Qlean/**/*.lean` is imported from `Qlean.lean` (no orphan modules the axiom gate can't see) | reject |
+| 5 | **Link completeness** | `scripts/check_links.py` | every prose statement is linked to an existing Lean decl, and every link resolves | reject |
 
 Plus one **advisory** pass, not a reject:
 

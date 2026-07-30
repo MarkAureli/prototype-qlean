@@ -47,6 +47,13 @@ run_cmd do
     (String.intercalate "\n" (exports.toList.map (·.toString)) ++ "\n")
   logInfo m!"exported declarations ({exports.size}): {exports.toList}"
 
+  -- MODULE DUMP (for the coverage gate): every Qlean.* module actually loaded by
+  -- `import Qlean`. A `Qlean/**/*.lean` file absent here is an unimported orphan
+  -- the axiom gate would never see.
+  let qmods := env.allImportedModuleNames.filter (fun m => (`Qlean).isPrefixOf m)
+  IO.FS.writeFile "build/qlean_modules.txt"
+    (String.intercalate "\n" (qmods.toList.map (·.toString)) ++ "\n")
+
   -- HYPOTHESIS AUDIT (informational — routes conditionality to human review).
   liftTermElabM do
     for name in exports do

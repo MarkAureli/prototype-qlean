@@ -25,9 +25,13 @@ jobs:
           use-mathlib-cache: true
           build: true
 
-      # Gate 2 + hypothesis audit + export dump.
+      # Gate 2 + hypothesis audit + export/module dump.
       - name: Axiom gate & hypothesis audit
         run: lake env lean scripts/Checker.lean
+
+      # Coverage gate: reject unimported Lean files (so the axiom gate sees all of them).
+      - name: Coverage gate
+        run: python3 scripts/check_coverage.py
 
       # Gate 3: prose <-> Lean link completeness.
       - name: Link-completeness gate

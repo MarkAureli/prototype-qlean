@@ -1,0 +1,99 @@
+% Contribution: QSP/QSVT polynomial approximation of f(x) = √(-log x²).
+% Prose linked to the submitted Lean via \lean{Qlean.Contrib.QSP.*}.
+% The link gate (scripts/check_links.py) enforces that every formal environment
+% below carries a \lean{...} resolving to an exported declaration.
+
+\section{QSP approximation of \texorpdfstring{$\sqrt{-\log x^2}$}{sqrt(-log x^2)}}
+
+We formalize the exact algebraic and analytic core behind the QSP/QSVT
+polynomial approximation of $f(x) = \sqrt{-\log x^2}$ on $[1/\kappa, 1]$. The
+transcendental estimates (Bernstein's theorem; degree $= O(\kappa \log 1/\varepsilon)$)
+are quoted from the literature; the results below are the identities to which
+those estimates are applied, each proved unconditionally in Lean.
+
+\begin{definition}[Target function]
+  \label{def:qsp-f}
+  \lean{Qlean.Contrib.QSP.f}
+  The target is $f(x) = \sqrt{-\log x^2}$.
+\end{definition}
+
+\begin{definition}[Smooth residual factor]
+  \label{def:qsp-R}
+  \lean{Qlean.Contrib.QSP.R}
+  The smooth residual factor is $R(x) = \sqrt{(-\log x^2)/(1 - x^2)}$.
+\end{definition}
+
+\begin{lemma}[Branch-point extraction]
+  \label{lem:qsp-factorization}
+  \lean{Qlean.Contrib.QSP.factorization}
+  For $0 < u < 1$,
+  \[
+    \sqrt{-\log u} \;=\; \sqrt{1 - u}\,\cdot\,\sqrt{\tfrac{-\log u}{1 - u}}.
+  \]
+  The entire square-root cusp is carried by the explicit factor $\sqrt{1-u}$;
+  the residual $\sqrt{(-\log u)/(1-u)}$ is smooth. \emph{(Hypotheses $0<u<1$.)}
+\end{lemma}
+
+\begin{lemma}[Positivity of the smooth factor]
+  \label{lem:qsp-gpos}
+  \lean{Qlean.Contrib.QSP.g_pos}
+  For $0 < u < 1$, the smooth factor $g(u) = (-\log u)/(1-u)$ is strictly positive.
+\end{lemma}
+
+\begin{lemma}[Mercator series of the smooth factor]
+  \label{lem:qsp-hasSum}
+  \lean{Qlean.Contrib.QSP.hasSum_g}
+  With $w = 1 - u$, for $0 < w < 1$,
+  \[
+    \sum_{k=0}^{\infty} \frac{w^k}{k+1} \;=\; \frac{-\log(1 - w)}{w},
+  \]
+  obtained from Mathlib's Mercator series $\sum_n w^{n+1}/(n+1) = -\log(1-w)$ by
+  dividing through by $w$.
+\end{lemma}
+
+\begin{lemma}[Square-root coefficient recurrence]
+  \label{lem:qsp-coeff}
+  \lean{Qlean.Contrib.QSP.coeff_recurrence}
+  The Taylor coefficients of $R = \sqrt{g} = \sum_j r_j w^j$ are fixed by the
+  convolution identities $\sum_{i+j=n} r_i r_j = 1/(n+1)$. The closed forms
+  $r_0=1,\ r_1=\tfrac14,\ r_2=\tfrac{13}{96},\ r_3=\tfrac{35}{384},\
+  r_4=\tfrac{6271}{92160}$ satisfy these identities for $n = 0,\dots,4$.
+\end{lemma}
+
+\begin{proposition}[Bernstein-ellipse parameter]
+  \label{prop:qsp-rho}
+  \lean{Qlean.Contrib.QSP.rho_eq}
+  For $\kappa > 1$, with $c = (\kappa^2+1)/(\kappa^2-1)$, the largest
+  singularity-free Bernstein ellipse has parameter
+  \[
+    \rho \;=\; c + \sqrt{c^2 - 1} \;=\; \frac{\kappa+1}{\kappa-1},
+  \]
+  which governs the geometric convergence rate $O(\rho^{-n})$ of the Chebyshev
+  expansion of $R$.
+\end{proposition}
+
+\begin{theorem}[Off-diagonal QSP factorization]
+  \label{thm:qsp-ffactor}
+  \lean{Qlean.Contrib.QSP.f_factor}
+  \uses{def:qsp-f,def:qsp-R,lem:qsp-factorization}
+  For $0 < x < 1$,
+  \[
+    f(x) \;=\; \sqrt{1 - x^2}\,\cdot\,R(x),
+  \]
+  which is exactly the $\sqrt{1-x^2}\cdot(\text{polynomial})$ shape produced as
+  the off-diagonal element of a QSP sequence when $R$ is replaced by its
+  polynomial approximant.
+\end{theorem}
+
+\begin{theorem}[Error propagation with cusp suppression]
+  \label{thm:qsp-error}
+  \lean{Qlean.Contrib.QSP.error_propagation}
+  \uses{def:qsp-f,def:qsp-R,thm:qsp-ffactor}
+  Let $0 < x < 1$. If a polynomial value $Q$ approximates the smooth factor
+  $R(x)$ with $|R(x) - Q| \le \varepsilon$, then
+  \[
+    \bigl| f(x) - \sqrt{1 - x^2}\,Q \bigr| \;\le\; \varepsilon,
+  \]
+  the bound being suppressed by $\sqrt{1-x^2} \le 1$ near the cusp $x \to 1$.
+  \emph{(Conditional on the stated approximation hypothesis $|R(x)-Q|\le\varepsilon$.)}
+\end{theorem}
